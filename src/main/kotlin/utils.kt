@@ -17,8 +17,8 @@ fun pre(html: String): String {
 }
 
 fun h2(funs: Array<() -> Unit>) {
-    for (fn in funs) {
-        print("\n## ${fn.toString()
+    funs.forEachIndexed { index, fn ->
+        print("\n## ${index + 1}. ${fn.toString()
             .replace("function ","")
             .replace(" (Kotlin reflection is not available)","")
             .replace("_".toRegex(), " ").capitalize()}\n")
