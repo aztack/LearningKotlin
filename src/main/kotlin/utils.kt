@@ -9,7 +9,11 @@ fun code(code: String) {
 }
 
 fun comment(comment: String) {
-    println("\n> $comment\n")
+    println("\n${comment.replaceIndent("> ")}\n")
+}
+
+fun pre(html: String): String {
+    return "<pre>$html</pre>"
 }
 
 fun h2(funs: Array<() -> Unit>) {
@@ -26,11 +30,11 @@ fun todo(title: String) {
     print("// TODO: $title")
 }
 
-fun link(title: String, link: String) {
-    println("[$title]($link)")
+fun link(title: String, link: String): String {
+    return "[$title]($link)"
 }
 
-fun list(items: List<String>) {
+fun list(items: Array<String>) {
     items.forEach{it -> println("- $it")}
 }
 
@@ -43,4 +47,12 @@ fun run(block: () -> Any) {
     println("\n```")
     block()
     println("\n```")
+}
+
+fun html(html: String) {
+   println(html)
+}
+
+fun text(text: String) {
+    println(text)
 }
