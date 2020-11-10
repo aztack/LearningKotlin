@@ -28,7 +28,7 @@ fun ch1() {
 inline fun exploring_the_use_of_rang_expression_to_iterate_through_alphabet_characters() {
     code("""
     for (letter in 'Z' downTo 'A') print(letter)")
-    => """)
+    """)
     run {
         for (letter in 'Z' downTo 'A') print(letter)
     }
@@ -37,7 +37,7 @@ inline fun exploring_the_use_of_rang_expression_to_iterate_through_alphabet_char
     code("""
     val ten = 10
     for (letter in 9 downTo 'A') print(letter)")
-    => """)
+    """)
     run {
         val ten = 10
         for (number in ten downTo 0) print(number)
@@ -114,6 +114,7 @@ inline fun using_range_expressions_with_flow_control_statements() {
         }
         print("$score belongs to grade $grade")
     }
+    comment("You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode")
     comment("Above `when` expression is translate into following bytecode:")
     html(pre("""
         LINENUMBER 104 L1
