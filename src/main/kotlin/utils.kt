@@ -56,3 +56,7 @@ fun html(html: String) {
 fun text(text: String) {
     println(text)
 }
+
+fun img(title:String, url: String): String {
+    return "![$title]($url)"
+}
