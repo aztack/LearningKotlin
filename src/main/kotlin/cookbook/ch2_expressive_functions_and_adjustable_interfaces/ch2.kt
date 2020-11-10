@@ -6,6 +6,7 @@ import comment
 import h1
 import h2
 import html
+import img
 import link
 import list
 import run
@@ -20,7 +21,8 @@ fun ch2() {
         ::declaring_interfaces_containing_dfault_implementations,
         ::extending_functionalities_of_classes,
         ::destructuring_types,
-        ::inlining_parameters_of_closure_type
+        ::inlining_parameters_of_closure_type,
+        ::infix_notations_for_functions
     ))
 }
 
@@ -322,6 +324,32 @@ fun inlining_parameters_of_closure_type() {
     }
     list(arrayOf(
         "inline function MUST be a top level declaration",
-        "You can only inline some of the lambdas by mark others by `noinline` like this: `inline fun foo(inlined: () -> Uint, noinline notInlined: () -> Uint)`"
+        "You can only inline some of the lambdas by mark others by `noinline` like this: `inline fun foo(inlined: () -> Uint, noinline notInlined: () -> Uint)`",
+        "Kotlin also allows declaring inline class properties"
+    ))
+}
+
+fun infix_notations_for_functions() {
+    code("""
+    val pair = 1 to 3
+    println(pair)
+
+    val seq1 = 1 until 3
+    val seq2 = 3 downTo 1
+    println(seq1)
+    println(seq2)
+    """)
+    run {
+        val pair = 1 to 3
+        println(pair)
+
+        val seq1 = 1 until 3
+        val seq2 = 3 downTo 1
+        println(seq1)
+        println(seq2)
+    }
+    list(arrayOf(
+        "`to()` in `Tuples.kt`: `public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)`",
+        "infix functions are displayed in the same color with normal function in IntelliJ：${img("color","https://user-images.githubusercontent.com/782871/98649756-eaf37600-2372-11eb-8339-883b12a40500.png")}"
     ))
 }
