@@ -74,7 +74,7 @@ Output:
 Output:
 
 ```
--559153553 doesn't not belong to 0..10
+-91116924 doesn't not belong to 0..10
 
 ```
 - There is no good way to escape dollar sign in Kotlin here document, you have to use string interpolation: `${'$'}`
@@ -95,7 +95,7 @@ Output:
 Output:
 
 ```
-45 belongs to grade Bad
+27 belongs to grade Bad
 ```
 
 > You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode
@@ -511,6 +511,53 @@ Output:
 - `to()` in `Tuples.kt`: `public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)`
 - infix functions are displayed in the same color with normal function in IntelliJ：![color](https://user-images.githubusercontent.com/782871/98649756-eaf37600-2372-11eb-8339-883b12a40500.png)
 
-# Q&A
+## 7. Smart types checking with generic reified parameters
 
-Process finished with exit code 0
+```kotlin
+ //Only reified generic parameter can be accessed during runtime
+ inline fun <reified T> Gson.fromJson(json: String): T {
+     return fromJson(json, T::class.java)
+ }
+ data class TestModel(
+     val id: Int,
+     val description: String
+ )
+ fun fn() {
+     val json = """{"id":1,"description":"Parsed from string"}"""
+     val response = Gson().fromJson<TestModel>(json);
+     println(response)
+ }
+```
+
+Output:
+
+```
+TestModel(id=1, description=Parsed from string)
+
+```
+- Only reified generic parameter can be accessed during runtime
+- Using reified generic parameter, you can avoid pass java class around
+
+## 8. Overloading operators
+
+```kotlin
+ data class Position(val x: Float, val y: Float, val z: Float) {
+     operator fun plus(other: Position) = Position(x + other.x, y + other.y, z + other.z)
+     operator fun minus(other: Position) = Position(x - other.x, y - other.y, z - other.z)
+ }
+ fun fn() {
+     val p1 = Position(132.5f, 4f, 3.43f)
+     val p2 = Position(1.5f, 400f, 11.56f)
+     println(p1 - p2) // cmd+click on minus sign will jump to above Position::minus()
+ }
+```
+
+Output:
+
+```
+Position(x=131.0, y=-396.0, z=-8.13)
+
+```
+- [Kotlin Reference: Operator Overloading](https://kotlinlang.org/docs/reference/operator-overloading.html)
+- Implement invoke(...) will make an object callable
+- Implement get(...) will make an object act like a Map
