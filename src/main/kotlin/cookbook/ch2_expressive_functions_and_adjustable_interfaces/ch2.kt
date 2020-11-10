@@ -13,6 +13,7 @@ import run
 import text
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
+import com.google.gson.*
 
 fun ch2() {
     h1("Ch2. Expressive Functions and Adjustable Interfaces")
@@ -22,7 +23,9 @@ fun ch2() {
         ::extending_functionalities_of_classes,
         ::destructuring_types,
         ::inlining_parameters_of_closure_type,
-        ::infix_notations_for_functions
+        ::infix_notations_for_functions,
+        ::smart_types_checking_with_generic_reified_parameters,
+        ::overloading_operators
     ))
 }
 
@@ -351,5 +354,68 @@ fun infix_notations_for_functions() {
     list(arrayOf(
         "`to()` in `Tuples.kt`: `public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)`",
         "infix functions are displayed in the same color with normal function in IntelliJ：${img("color","https://user-images.githubusercontent.com/782871/98649756-eaf37600-2372-11eb-8339-883b12a40500.png")}"
+    ))
+}
+
+inline fun <reified T> Gson.fromJson(json: String): T {
+    return fromJson(json, T::class.java)
+}
+data class TestModel(
+    val id: Int,
+    val description: String
+)
+fun smart_types_checking_with_generic_reified_parameters() {
+    code("""
+    //Only reified generic parameter can be accessed during runtime
+    inline fun <reified T> Gson.fromJson(json: String): T {
+        return fromJson(json, T::class.java)
+    }
+    data class TestModel(
+        val id: Int,
+        val description: String
+    )
+    fun fn() {
+        val json = ""${'"'}{"id":1,"description":"Parsed from string"}""${'"'}
+        val response = Gson().fromJson<TestModel>(json);
+        println(response)
+    }
+    """)
+    run {
+        val json = """{"id":1,"description":"Parsed from string"}"""
+        val response = Gson().fromJson<TestModel>(json);
+        println(response)
+    }
+    list(arrayOf(
+        "Only reified generic parameter can be accessed during runtime",
+        "Using reified generic parameter, you can avoid pass java class around"
+    ))
+}
+
+data class Position(val x: Float, val y: Float, val z: Float) {
+    operator fun plus(other: Position) = Position(x + other.x, y + other.y, z + other.z)
+    operator fun minus(other: Position) = Position(x - other.x, y - other.y, z - other.z)
+}
+
+fun overloading_operators() {
+    code("""
+    data class Position(val x: Float, val y: Float, val z: Float) {
+        operator fun plus(other: Position) = Position(x + other.x, y + other.y, z + other.z)
+        operator fun minus(other: Position) = Position(x - other.x, y - other.y, z - other.z)
+    }
+    fun fn() {
+        val p1 = Position(132.5f, 4f, 3.43f)
+        val p2 = Position(1.5f, 400f, 11.56f)
+        println(p1 - p2) // cmd+click on minus sign will jump to above Position::minus()
+    }
+    """)
+    run {
+        val p1 = Position(132.5f, 4f, 3.43f)
+        val p2 = Position(1.5f, 400f, 11.56f)
+        println(p1 - p2)
+    }
+    list(arrayOf(
+        "[Kotlin Reference: Operator Overloading](https://kotlinlang.org/docs/reference/operator-overloading.html)",
+        "Implement invoke(...) will make an object callable",
+        "Implement get(...) will make an object act like a Map"
     ))
 }
