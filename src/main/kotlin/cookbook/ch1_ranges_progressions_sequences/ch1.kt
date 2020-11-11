@@ -25,7 +25,7 @@ fun ch1() {
     ))
 }
 
-inline fun exploring_the_use_of_rang_expression_to_iterate_through_alphabet_characters() {
+fun exploring_the_use_of_rang_expression_to_iterate_through_alphabet_characters() {
     code("""
     for (letter in 'Z' downTo 'A') print(letter)")
     """)
@@ -54,7 +54,7 @@ inline fun exploring_the_use_of_rang_expression_to_iterate_through_alphabet_char
     }
 }
 
-inline fun traversing_through_ranges_using_progression_with_a_custom_step_value() {
+fun traversing_through_ranges_using_progression_with_a_custom_step_value() {
     code("""
     val progression: IntProgression = 0..10 step 2
     for (i in progression) print(i)    
@@ -65,11 +65,11 @@ inline fun traversing_through_ranges_using_progression_with_a_custom_step_value(
     }
 }
 
-inline fun building_custom_progressions_to_traverse_dates() {
+fun building_custom_progressions_to_traverse_dates() {
     not_implemented()
 }
 
-inline fun using_range_expressions_with_flow_control_statements() {
+fun using_range_expressions_with_flow_control_statements() {
     code("""
     val randomInt = Random().nextInt()
     val range = 0..10
@@ -178,7 +178,7 @@ inline fun using_range_expressions_with_flow_control_statements() {
        L14"""))
 }
 
-inline fun discovering_the_concept_of_sequences() {
+fun discovering_the_concept_of_sequences() {
     text("`Sequence delays any operations on its elements until they are finally consumed.`")
     code("""
     val seq = ('a'..'z').asSequence()
