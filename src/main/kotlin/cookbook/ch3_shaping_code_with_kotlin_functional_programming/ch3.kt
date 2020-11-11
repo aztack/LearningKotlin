@@ -1,23 +1,32 @@
 package cookbook.ch3_shaping_code_with_kotlin_functional_programming
 
 import code
-import com.sun.org.apache.xalan.internal.xsltc.trax.TransformerImpl
 import comment
 import h1
 import h2
 import html
-import img
 import link
 import list
 import run
 import not_implemented
 import text
+import java.math.BigInteger
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
+import kotlin.time.*
 
 fun ch3() {
     h1("Ch3. Shaping code with Kotlin functional programming")
     h2(arrayOf(
         ::working_effectively_with_lambda_expressions,
-        ::discovering_basic_scoping_functions
+        ::discovering_basic_scoping_functions,
+        ::initializing_objects_the_clean_way_using_the_run_scoping_function,
+        ::working_with_higher_order_functions,
+        ::functions_curring,
+        ::function_composition,
+        ::implement_the_Either_Monad_design_pattern,
+        ::approach_to_automatic_functions_memoization
     ))
 }
 
@@ -127,13 +136,14 @@ fun discovering_basic_scoping_functions() {
     - There are 6 scope functions: `run with apply, also let take`. The first three got implicit receiver
       * `run with apply`: do not need to pass `this` to block, since you can access receiver with `this`
       * `also let take` : pass `this` to block, you can access object with `it` and return `it` or any other things
-    - Only `also apply` begin with letter `a` and return `this`
+    - Only `also apply` begin with letter `a` and return `this` and usually used in value initialization (since both of them return `this`)
     """.trimIndent())
 
     text("Conventions for using `apply`")
     code("""
+        // Compare with `also` in following snippets
+        // `apply` only access properties in apply block!
         val peter = Person().apply {
-            // only access properties in apply block!
             name = "Peter"
             age = 18
         }
@@ -145,6 +155,9 @@ fun discovering_basic_scoping_functions() {
 
     text("Conventions for using `also`")
     code("""
+        // Following code is very readable:
+        // initialize property author with parameter author
+        // and `also` require it age not null and print it's name
         class Book(author: Person) {
             val author = author.also {
               requireNotNull(it.age)
@@ -199,6 +212,11 @@ fun discovering_basic_scoping_functions() {
         val person: Person = getPerson()
         print(person.name)
         print(person.age)
+        // better rewrite as:
+        val person = getPerson().also {
+            print(name)
+            print(age)
+        }
     """)
 
     text("Conventions for using `run`")
@@ -218,5 +236,124 @@ fun discovering_basic_scoping_functions() {
         fun printAge(person: Person) = {
             print(person.age)
         }
+    """)
+}
+
+fun initializing_objects_the_clean_way_using_the_run_scoping_function() {
+    code("""
+    Calendar.Builder().run {
+        setCalendarType("iso8601")
+        setDate(2020, 11, 11)
+        setTimeZone(TimeZone.getTimeZone("GMT+8:00"))
+        build()
+    }.also {
+        print(it.time)
+    }
+    """)
+    run {
+        Calendar.Builder().run {
+            setCalendarType("iso8601")
+            setDate(2020, 11, 11)
+            setTimeZone(TimeZone.getTimeZone("GMT+8:00"))
+            build()
+        }.also {
+            print(it.time)
+        }
+    }
+}
+
+fun working_with_higher_order_functions () {
+    not_implemented()
+}
+
+fun functions_curring() {
+    not_implemented()
+}
+
+fun function_composition() {
+    not_implemented()
+}
+
+sealed class Either<out L, out R> {
+    data class Left<out L>(val left: L): Either<L, Nothing>()
+    data class Right<out R>(val right: R): Either<Nothing, R>()
+    companion object {
+        fun <R> right(value: R): Either<Nothing, R> = Either.Right(value)
+        fun <L> left(value: L): Either<L, Nothing> = Either.Left(value)
+    }
+}
+fun implement_the_Either_Monad_design_pattern() {
+    not_implemented()
+}
+
+typealias MemoizedFun<P, R> = (P) -> R;
+class Memoizer<P, R> private constructor () {
+    private val map = ConcurrentHashMap<P, R>()
+    private fun doMemoize(function: MemoizedFun<P, R>): MemoizedFun<P, R> = { param: P ->
+        map.computeIfAbsent(param) { param: P ->
+            function(param)
+        }
+    }
+
+    companion object {
+        fun <T, U> memoize(fn: MemoizedFun<T, U>): MemoizedFun<T, U> = Memoizer<T, U>().doMemoize(fn)
+    }
+}
+
+fun <P, R> (MemoizedFun<P, R>).memoize() : MemoizedFun<P, R> = Memoizer.memoize<P, R>(this)
+
+@OptIn(ExperimentalTime::class)
+fun approach_to_automatic_functions_memoization() {
+    code("""
+    typealias MemoizedFun<P, R> = (P) -> R;
+    class Memoizer<P, R> private constructor () {
+        private val map = ConcurrentHashMap<P, R>()
+        private fun doMemoize(function: MemoizedFun<P, R>): MemoizedFun<P, R> = { param: P ->
+            map.computeIfAbsent(param) { param: P ->
+                function(param)
+            }
+        }
+    
+        companion object {
+            fun <T, U> memoize(fn: MemoizedFun<T, U>): MemoizedFun<T, U> = Memoizer<T, U>().doMemoize(fn)
+        }
+    }
+    fun <P, R> (MemoizedFun<P, R>).memoize() : MemoizedFun<P, R> = Memoizer.memoize<P, R>(this)
+
+    fun fn() {
+        fun factorial(n: BigInteger): BigInteger =
+            if (n == BigInteger.ONE) n else n * factorial(n - BigInteger.ONE)
+        val memoizedFactorial = ::factorial.memoize()
+        val n = 100.toBigInteger()
+        measureTime { println(factorial(n)) }.also {
+            println("Execution time ${'$'}it")
+        }.run {
+            measureTime { println(memoizedFactorial(n)) }.also {
+                println("Execution time ${'$'}it")
+                println("${'$'}{(((this - it) / this) * 100).roundToInt()}% faster")
+            }
+        }
+    }
+    """)
+    run {
+        fun factorial(n: BigInteger): BigInteger =
+            if (n == BigInteger.ONE) n else n * factorial(n - BigInteger.ONE)
+
+        val memoizedFactorial = ::factorial.memoize()
+
+        val n = 100.toBigInteger()
+
+        measureTime { println(factorial(n)) }.also {
+            println("Execution time $it")
+        }.run {
+            measureTime { println(memoizedFactorial(n)) }.also {
+                println("Execution time $it")
+                println("${(((this - it) / this) * 100).roundToInt()}% faster")
+            }
+        }
+    }
+
+    comment("""
+    Question: Above memoize only support one-argument function. How to support multiple arguments? curry? 
     """)
 }
