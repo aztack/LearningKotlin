@@ -19,7 +19,7 @@ fun ch2() {
     h1("Ch2. Expressive Functions and Adjustable Interfaces")
     h2(arrayOf(
         ::declaring_adjustable_functions_with_default_paramaters,
-        ::declaring_interfaces_containing_dfault_implementations,
+        ::declaring_interfaces_containing_default_implementations,
         ::extending_functionalities_of_classes,
         ::destructuring_types,
         ::inlining_parameters_of_closure_type,
@@ -81,7 +81,7 @@ class MyClass: A, B {
         println("I'm the first one here")
     }
 }
-fun declaring_interfaces_containing_dfault_implementations() {
+fun declaring_interfaces_containing_default_implementations() {
     code("""
     interface EmailValidator {
         var input: String
@@ -102,7 +102,7 @@ fun declaring_interfaces_containing_dfault_implementations() {
     RegistrationForm("aztack@163.com").onInputTextUpdated("aztack163.com");
     """)
     run {
-        RegistrationForm("aztack@163.com").onInputTextUpdated("aztack163.com");
+        RegistrationForm("aztack@163.com").onInputTextUpdated("aztack163.com")
     }
     comment("""
     Important: `interface` can have default function implementation but we are not able to instantiate default values
@@ -382,7 +382,7 @@ fun smart_types_checking_with_generic_reified_parameters() {
     """)
     run {
         val json = """{"id":1,"description":"Parsed from string"}"""
-        val response = Gson().fromJson<TestModel>(json);
+        val response = Gson().fromJson<TestModel>(json)
         println(response)
     }
     list(arrayOf(
