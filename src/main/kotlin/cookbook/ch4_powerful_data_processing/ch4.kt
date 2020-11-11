@@ -15,7 +15,7 @@ fun ch4() {
         ::dividing_data_into_subsets,
         ::data_transformation_with_map_and_flatMap,
         ::folding_and_reducing_data_sets,
-        ::grouping_data,
+        ::grouping_data
     ))
 }
 
