@@ -57,7 +57,7 @@ Output:
 
 ## 3. Building custom progressions to traverse dates
 
- > not implemented
+ > not implemented or left blank intentionally
 
 ## 4. Using range expressions with flow control statements
 
@@ -74,12 +74,13 @@ Output:
 Output:
 
 ```
--91116924 doesn't not belong to 0..10
+-1124648709 doesn't not belong to 0..10
 
 ```
 - There is no good way to escape dollar sign in Kotlin here document, you have to use string interpolation: `${'$'}`
 - `in` is an operator. see [Operator overloading](https://kotlinlang.org/docs/reference/operator-overloading.html)
 - [Provide a way for escaping the dollar sign symbol ("$") in raw strings and string templates](https://youtrack.jetbrains.com/issue/KT-2425)
+
 
 ```kotlin
  var score = Random().nextInt(100)
@@ -95,7 +96,7 @@ Output:
 Output:
 
 ```
-27 belongs to grade Bad
+81 belongs to grade Great
 ```
 
 > You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode
@@ -165,7 +166,9 @@ Output:
        L14</pre>
 
 ## 5. Discovering the concept of sequences
+
 `Sequence delays any operations on its elements until they are finally consumed.`
+
 
 ```kotlin
  val seq = ('a'..'z').asSequence()
@@ -251,7 +254,7 @@ Output:
 > Above language features make functions in Kotlin adjustable.
 
 
-## 2. Declaring interfaces containing dfault implementations
+## 2. Declaring interfaces containing default implementations
 
 ```kotlin
  interface EmailValidator {
@@ -409,6 +412,7 @@ Light bulb is turned on
 - You can implement destructuring for them by extend them with `operator fun componentN()`
 - You can skip unnecessary variables with underscore: `_` like in other programming languages.
 
+
 > Important: Destructuring declarations in Kotlin are `position-based`, NOT name-based.
 > `N` in `componentN()` is the position of property (begin with 1, NOT 0).
 > [Data class](https://kotlinlang.org/docs/reference/data-classes.html)
@@ -459,7 +463,9 @@ key: 1, value: banana
  }
 ```
 
+
 is translate into:
+
 
 ```kotlin
  public static final void inlining_parameters_of_closure_type() {
@@ -488,6 +494,7 @@ Wait for it!
 - You can only inline some of the lambdas by mark others by `noinline` like this: `inline fun foo(inlined: () -> Uint, noinline notInlined: () -> Uint)`
 - Kotlin also allows declaring inline class properties
 
+
 ## 6. Infix notations for functions
 
 ```kotlin
@@ -510,6 +517,7 @@ Output:
 ```
 - `to()` in `Tuples.kt`: `public infix fun <A, B> A.to(that: B): Pair<A, B> = Pair(this, that)`
 - infix functions are displayed in the same color with normal function in IntelliJ：![color](https://user-images.githubusercontent.com/782871/98649756-eaf37600-2372-11eb-8339-883b12a40500.png)
+
 
 ## 7. Smart types checking with generic reified parameters
 
@@ -538,6 +546,7 @@ TestModel(id=1, description=Parsed from string)
 - Only reified generic parameter can be accessed during runtime
 - Using reified generic parameter, you can avoid pass java class around
 
+
 ## 8. Overloading operators
 
 ```kotlin
@@ -561,3 +570,298 @@ Position(x=131.0, y=-396.0, z=-8.13)
 - [Kotlin Reference: Operator Overloading](https://kotlinlang.org/docs/reference/operator-overloading.html)
 - Implement invoke(...) will make an object callable
 - Implement get(...) will make an object act like a Map
+
+
+# Ch3. Shaping code with Kotlin functional programming
+
+## 1. Working effectively with lambda expressions
+
+ > not implemented or left blank intentionally
+
+## 2. Discovering basic scoping functions
+
+The Kotlin standard library contains several functions whose sole purpose is to execute a block of code within the context of an object
+
+
+```kotlin
+ fun getPlayers() : List<Player> = listOf(
+     Player("Stefan Madej", 109),
+     Player("Adam Ondra", 323),
+     Player("Chris Charma", 329)
+ )
+ getPlayers().let { it ->
+     it.also {
+         println("${it.size} players records fetched")
+         println(it)
+     }.let { it ->
+         it.sortedByDescending { it.bestScore }.first()
+     }.apply {
+         val name = this.name
+         print("Best Player: $name")
+     }
+ }
+```
+
+Output:
+
+```
+3 players records fetched
+[Player(name=Stefan Madej, bestScore=109), Player(name=Adam Ondra, bestScore=323), Player(name=Chris Charma, bestScore=329)]
+Best Player: Chris Charma
+Player(name=Chris Charma, bestScore=329)
+
+```
+
+Detail implementation of [Scope functions](https://kotlinlang.org/docs/reference/scope-functions.html): （some code are removed for for simplicity sake
+
+
+```kotlin
+ public inline fun <T> T.also(block: (T) -> Unit): T {
+     block(this)
+     return this
+ }
+ 
+ public inline fun <T, R> T.let(block: (T) -> R): R {
+     return block(this)
+ }
+ 
+ public inline fun <T> T.apply(block: T.() -> Unit): T {
+     block()
+     return this
+ }
+ 
+ public inline fun <T, R> with(receiver: T, block: T.() -> R): R {
+     return receiver.block()
+ }
+ 
+ public inline fun <T, R> T.run(block: T.() -> R): R {
+     return block()
+ }
+ 
+ public inline fun <T> T.takeIf(predicate: (T) -> Boolean): T? {
+     return if (predicate(this)) this else null
+ }
+ 
+ public inline fun <T> T.takeUnless(predicate: (T) -> Boolean): T? {
+     return if (!predicate(this)) this else null
+ }
+```
+
+
+There are two main differences between each scope function:
+
+- The way to refer to the context object
+- The return value.
+
+function | implicit receiver   | return              | first arg of block
+-------- | ------------------- | ------------------- | ------------------
+  run    |         yes         | block result        | -         
+  with   |         yes         | block result        | -       
+  apply  |         yes         | this                | -
+  also   |         no          | this                | this
+  let    |         no          | block result        | this          
+  take*  |         no          | block result or null| this  
+  
+Mnemonic:
+
+- There are 6 scope functions: `run with apply, also let take`. The first three got implicit receiver
+  * `run with apply`: do not need to pass `this` to block, since you can access receiver with `this`
+  * `also let take` : pass `this` to block, you can access object with `it` and return `it` or any other things
+- Only `also apply` begin with letter `a` and return `this` and usually used in value initialization (since both of them return `this`)
+
+Conventions for using `apply`
+
+
+```kotlin
+ // Compare with `also` in following snippets
+ // `apply` only access properties in apply block!
+ val peter = Person().apply {
+     name = "Peter"
+     age = 18
+ }
+ // equivalent to:
+ val clark = Person()
+ clark.name = "Clark"
+ clark.age = 18
+```
+
+
+Conventions for using `also`
+
+
+```kotlin
+ // Following code is very readable:
+ // initialize property author with parameter author
+ // and `also` require it age not null and print it's name
+ class Book(author: Person) {
+     val author = author.also {
+       requireNotNull(it.age)
+       print(it.name)
+     }
+ }
+ // equivalent to:
+ class Book(val author: Person) {
+     init {
+       requireNotNull(author.age)
+       print(author.name)
+     }
+ }
+```
+
+
+Conventions for using `let`
+
+
+```kotlin
+ getNullablePerson()?.let {
+     // only executed when not-null
+     promote(it)
+ }
+ val driversLicence: Licence? = getNullablePerson()?.let {
+     // convert nullable person to nullable driversLicence
+     licenceService.getDriversLicence(it) 
+ }
+ val person: Person = getPerson()
+ getPersonDao().let { dao -> 
+     // scope of dao variable is limited to this block
+     dao.insert(person)
+ }
+ // equivalent to:
+ val person: Person? = getPromotablePerson()
+ if (person != null) {
+   promote(person)
+ }
+ val driver: Person? = getDriver()
+ val driversLicence: Licence? = if (driver == null) null else
+     licenceService.getDriversLicence(it)
+ val person: Person = getPerson()
+ val personDao: PersonDao = getPersonDao()
+ personDao.insert(person)
+```
+
+
+Conventions for using `with`
+
+
+```kotlin
+ val person: Person = getPerson()
+ with(person) {
+     print(name)
+     print(age)
+ }
+ // equivalent to:
+ val person: Person = getPerson()
+ print(person.name)
+ print(person.age)
+ // better rewrite as:
+ val person = getPerson().also {
+     print(name)
+     print(age)
+ }
+```
+
+
+Conventions for using `run`
+
+
+```kotlin
+ val inserted: Boolean = run {
+     val person: Person = getPerson()
+     val personDao: PersonDao = getPersonDao()
+     personDao.insert(person)
+ }
+ fun printAge(person: Person) = person.run {
+     print(age)
+ }
+ // equivalent to:
+ val person: Person = getPerson()
+ val personDao: PersonDao = getPersonDao()
+ val inserted: Boolean = personDao.insert(person)
+ fun printAge(person: Person) = {
+     print(person.age)
+ }
+```
+
+
+## 3. Initializing objects the clean way using the run scoping (Kotlin reflection is not available)
+
+```kotlin
+ Calendar.Builder().run {
+     setCalendarType("iso8601")
+     setDate(2020, 11, 11)
+     setTimeZone(TimeZone.getTimeZone("GMT+8:00"))
+     build()
+ }.also {
+     print(it.time)
+ }
+```
+
+Output:
+
+```
+Fri Dec 11 00:00:00 CST 2020
+```
+
+## 4. Working with higher order functions
+
+ > not implemented or left blank intentionally
+
+## 5. Functions curring
+
+ > not implemented or left blank intentionally
+
+## 6. Function composition
+
+ > not implemented or left blank intentionally
+
+## 7. Implement the Either Monad design pattern
+
+ > not implemented or left blank intentionally
+
+## 8. Approach to automatic functions memoization
+
+```kotlin
+ typealias MemoizedFun<P, R> = (P) -> R;
+ class Memoizer<P, R> private constructor () {
+     private val map = ConcurrentHashMap<P, R>()
+     private fun doMemoize(function: MemoizedFun<P, R>): MemoizedFun<P, R> = { param: P ->
+         map.computeIfAbsent(param) { param: P ->
+             function(param)
+         }
+     }
+ 
+     companion object {
+         fun <T, U> memoize(fn: MemoizedFun<T, U>): MemoizedFun<T, U> = Memoizer<T, U>().doMemoize(fn)
+     }
+ }
+ fun <P, R> (MemoizedFun<P, R>).memoize() : MemoizedFun<P, R> = Memoizer.memoize<P, R>(this)
+ 
+ fun fn() {
+     fun factorial(n: BigInteger): BigInteger =
+         if (n == BigInteger.ONE) n else n * factorial(n - BigInteger.ONE)
+     val memoizedFactorial = ::factorial.memoize()
+     val n = 100.toBigInteger()
+     measureTime { println(factorial(n)) }.also {
+         println("Execution time $it")
+     }.run {
+         measureTime { println(memoizedFactorial(n)) }.also {
+             println("Execution time $it")
+             println("${(((this - it) / this) * 100).roundToInt()}% faster")
+         }
+     }
+ }
+```
+
+Output:
+
+```
+93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
+Execution time 2.31ms
+93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
+Execution time 937us
+59% faster
+
+```
+
+> Question: Above memoize only support one-argument function. How to support multiple arguments? curry? 
+
