@@ -2,8 +2,8 @@ fun h1(title: String) {
     println("\n# $title")
 }
 
-fun code(code: String) {
-    println("\n```kotlin")
+fun code(code: String, kind: String = "kotlin") {
+    println("\n```$kind")
     println(code.replaceIndent(" "))
     println("```\n")
 }
@@ -16,8 +16,8 @@ fun pre(html: String): String {
     return "<pre>$html</pre>"
 }
 
-fun h2(funs: Array<() -> Unit>) {
-    funs.forEachIndexed { index, fn ->
+fun h2(functions: Array<() -> Unit>) {
+    functions.forEachIndexed { index, fn ->
         print("\n## ${index + 1}. ${fn.toString()
             .replace("function ","")
             .replace(" (Kotlin reflection is not available)","")
@@ -26,23 +26,21 @@ fun h2(funs: Array<() -> Unit>) {
     }
 }
 
-fun todo(title: String) {
-    print("// TODO: $title")
-}
-
 fun link(title: String, link: String): String {
     return "[$title]($link)"
 }
 
-fun list(items: Array<String>) {
-    items.forEach{it -> println("- $it")}
+fun list(items: Array<String>, title: String? = null) {
+    if (title != null) println("\n$title:\n")
+    items.forEach{println("- $it")}
+    println()
 }
 
 fun not_implemented() {
-    println("\n > not implemented")
+    println("\n > not implemented or left blank intentionally")
 }
 
-fun run(block: () -> Any) {
+fun run(block: () -> Any?) {
     println("Output:")
     println("\n```")
     block()
@@ -54,7 +52,7 @@ fun html(html: String) {
 }
 
 fun text(text: String) {
-    println(text)
+    println("\n$text\n")
 }
 
 fun img(title:String, url: String): String {
