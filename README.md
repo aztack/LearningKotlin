@@ -74,7 +74,7 @@ Output:
 Output:
 
 ```
--1124648709 doesn't not belong to 0..10
+192729858 doesn't not belong to 0..10
 
 ```
 - There is no good way to escape dollar sign in Kotlin here document, you have to use string interpolation: `${'$'}`
@@ -96,7 +96,7 @@ Output:
 Output:
 
 ```
-81 belongs to grade Great
+79 belongs to grade Great
 ```
 
 > You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode
@@ -669,6 +669,11 @@ Mnemonic:
   * `also let take` : pass `this` to block, you can access object with `it` and return `it` or any other things
 - Only `also apply` begin with letter `a` and return `this` and usually used in value initialization (since both of them return `this`)
 
+> [What does “.()” mean in Kotlin?](https://stackoverflow.com/questions/44427382/what-does-mean-in-kotlin):
+> 
+> There is a misunderstanding that T.() -> Y is (T.()) -> Y, but actually is T.(()->Y). As we know (X)->Y is a lambda, so T.(X)->Y is an extension on T.
+
+
 Conventions for using `apply`
 
 
@@ -856,12 +861,226 @@ Output:
 
 ```
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 2.31ms
+Execution time 2.20ms
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 937us
-59% faster
+Execution time 1.03ms
+53% faster
 
 ```
 
 > Question: Above memoize only support one-argument function. How to support multiple arguments? curry? 
 
+
+# Ch4. Powerful Data Processing
+
+## 1. Composing and consuming collections the easy way
+
+```kotlin
+ val sentMessages = listOf(
+     Message("Hi Agat, any plans for the evening?", "Samuel"),
+     Message("Great, I'll take some wine too", "Samuel")
+ )
+ val inboxMessages = mutableListOf(
+     Message("Let's go out of town and watch the stars tonight!", "Agat"),
+     Message("Excelent!", "Agat")
+ )
+ val allMessages = sentMessages + inboxMessages
+ allMessages.forEach{ (text, _) ->
+     println(text)
+ }
+```
+
+Output:
+
+```
+Hi Agat, any plans for the evening?
+Great, I'll take some wine too
+Let's go out of town and watch the stars tonight!
+Excellent!
+
+```
+
+> Collection<T> override operator plus/minus. You can union/subtract collection with `+` and `-`    
+
+
+## 2. Filtering datasets
+
+```kotlin
+ (sentMessages + inboxMessages).filter { it.sender == "Samuel" }.forEach(::println)
+```
+
+Output:
+
+```
+Message(text=Hi Agat, any plans for the evening?, sender=Samuel, timestamp=2020-11-12T09:18:45.556Z)
+Message(text=Great, I'll take some wine too, sender=Samuel, timestamp=2020-11-12T09:18:45.556Z)
+
+```
+- `::` in Kotlin is about meta-programming, including method references, property references and class literals. 
+- [Kotlin Reference: Reflect](https://kotlinlang.org/docs/reference/reflection.html)
+- [kotlin.reflect](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/)
+
+
+## 3. Automatic null removal
+
+```kotlin
+ data class News(val title: String, val url: String) {
+     override fun toString(): String = "[$title]($url)"
+ }
+ fun getNews() = listOf(
+     News("Kotlin 1.4.0 is out!", "https://blog.jetbrains.com/kotlin"),
+     News("Google launches Android KTX Kotlin extensions for developers", "http://android-developers.googleblog.com"),
+     null,
+     null,
+     News("How to Pick a Career", "https://waitbutwhy.com")
+ )
+ getNews().filterNotNull()
+     .forEachIndexed { index, news ->
+         println("$index. $news")
+     }
+```
+
+Output:
+
+```
+0. [Kotlin 1.4.0 is out!](https://blog.jetbrains.com/kotlin)
+1. [Google launches Android KTX Kotlin extensions for developers](http://android-developers.googleblog.com)
+2. [How to Pick a Career](https://waitbutwhy.com)
+
+```
+
+## 4. Sorting data with custom comparator
+
+```kotlin
+ data class Message2(val text: String,
+                 val sender: String,
+                 val receiver: String,
+                 val time: Instant = Instant.now());
+ val sentMessages = listOf(
+     Message2(
+         "I'm programming in Kotlin, of course",
+         "Samuel",
+         "Agat",
+         Instant.parse("2018-12-18T10:13:35Z")
+     ),
+     Message2(
+         "Sure!",
+         "Samuel",
+         "Agat",
+         Instant.parse("2018-12-18T10:15:35Z")
+     )
+ )
+ val inboxMessages = mutableListOf(
+     Message2(
+         "Hey Sam, any plans for the evening?",
+         "Samuel",
+         "Agat",
+         Instant.parse("2018-12-18T10:12:35Z")
+     ),
+     Message2(
+         "That's cool, can I join you?",
+         "Samuel",
+         "Agat",
+         Instant.parse("2018-12-18T10:14:35Z")
+     )
+ )
+ val allMessages = sentMessages + inboxMessages
+ allMessages.sortedBy { it.time }
+     .forEach { println(it.text) }
+```
+
+Output:
+
+```
+Hey Sam, any plans for the evening?
+I'm programming in Kotlin, of course
+That's cool, can I join you?
+Sure!
+
+```
+
+## 5. Building strings based on dataset elements
+
+ > not implemented or left blank intentionally
+
+## 6. Dividing data into subsets
+
+```kotlin
+ val messages = listOf(
+     Message("Any plans for the evening?"),
+     Message("Learning Kotlin, of course"),
+     Message("I'm going to watch the new Star Wars movie"),
+     Message("Would u like to join?"),
+     Message("Meh, I don't know"),
+     Message("See you later!"),
+     Message("I like ketchup"),
+     Message("Did you send CFP for Kotlin Conf?"),
+     Message("Sure!")
+ )
+ messages.windowed(4, partialWindows = true, step = 4) {
+     it.map { it.text }
+ }.run {
+     forEachIndexed { index, it ->
+         println("Group ${index + 1}. $it")
+     }
+ }
+```
+
+Output:
+
+```
+Group 1. [Any plans for the evening?, Learning Kotlin, of course, I'm going to watch the new Star Wars movie, Would u like to join?]
+Group 2. [Meh, I don't know, See you later!, I like ketchup, Did you send CFP for Kotlin Conf?]
+Group 3. [Sure!]
+
+```
+
+> You can find many useful extension functions for Collections [here](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.collections/)
+
+
+## 7. Data transformation with map and flatMap
+
+ > not implemented or left blank intentionally
+
+## 8. Folding and reducing data sets
+
+```kotlin
+ data class Track(val title: String, val durationInSeconds: Int)
+ data class Album(val name: String, val tracks: List<Track>)
+ 
+ fun Album.getStartTime(name: String): Int {
+     val index = tracks.indexOfFirst { track -> track.title == name}
+     if (index < 0) throw IllegalArgumentException("No such track")
+     return tracks.take(index)
+         .map {(name, duration) -> duration}
+         .fold(0) {acc, i -> acc + i}
+ }
+ Album(
+     "Sunny side up", listOf(
+         Track("10/10", 176),
+         Track("Coming Up Easy", 292),
+         Track("Growing Up Beside You", 191),
+         Track("Candy", 303),
+         Track("Tricks of the Trade", 151)
+     )
+ ).run {
+     arrayOf("Growing Up Beside You", "Coming Up Easy").forEach {
+         println("\"$it\" started at ${getStartTime(it)} seconds")
+     }
+ }
+```
+
+Output:
+
+```
+"Growing Up Beside You" started at 468 seconds
+"Coming Up Easy" started at 176 seconds
+
+```
+- `fun <T, R> Iterable<T>.fold(initial: R, operation: (acc: R, T) -> R): R ` is the equivalent of `Array.prototype.reduce` in JavaScipt
+- `fun <S, T : S> Iterable<T>.reduce(operation: (acc: S, T) -> S): S` is different from JavaScript equivalent. It use first element as initial value
+
+
+## 9. Grouping data
+
+ > not implemented or left blank intentionally
