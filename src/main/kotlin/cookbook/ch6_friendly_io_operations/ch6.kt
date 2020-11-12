@@ -1,0 +1,2 @@
+package cookbook.ch6_friendly_io_operations
+
