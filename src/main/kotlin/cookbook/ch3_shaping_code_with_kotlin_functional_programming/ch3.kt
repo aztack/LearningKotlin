@@ -139,6 +139,12 @@ fun discovering_basic_scoping_functions() {
     - Only `also apply` begin with letter `a` and return `this` and usually used in value initialization (since both of them return `this`)
     """.trimIndent())
 
+    comment("""
+    [What does “.()” mean in Kotlin?](https://stackoverflow.com/questions/44427382/what-does-mean-in-kotlin):
+ 
+    There is a misunderstanding that T.() -> Y is (T.()) -> Y, but actually is T.(()->Y). As we know (X)->Y is a lambda, so T.(X)->Y is an extension on T.
+    """)
+
     text("Conventions for using `apply`")
     code("""
         // Compare with `also` in following snippets
