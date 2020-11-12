@@ -74,7 +74,7 @@ Output:
 Output:
 
 ```
-192729858 doesn't not belong to 0..10
+-260819371 doesn't not belong to 0..10
 
 ```
 - There is no good way to escape dollar sign in Kotlin here document, you have to use string interpolation: `${'$'}`
@@ -96,7 +96,7 @@ Output:
 Output:
 
 ```
-79 belongs to grade Great
+22 belongs to grade Bad
 ```
 
 > You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode
@@ -861,10 +861,10 @@ Output:
 
 ```
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 2.20ms
+Execution time 5.08ms
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 1.03ms
-53% faster
+Execution time 1.36ms
+73% faster
 
 ```
 
@@ -912,8 +912,8 @@ Excellent!
 Output:
 
 ```
-Message(text=Hi Agat, any plans for the evening?, sender=Samuel, timestamp=2020-11-12T09:18:45.556Z)
-Message(text=Great, I'll take some wine too, sender=Samuel, timestamp=2020-11-12T09:18:45.556Z)
+Message(text=Hi Agat, any plans for the evening?, sender=Samuel, timestamp=2020-11-12T11:43:54.569Z)
+Message(text=Great, I'll take some wine too, sender=Samuel, timestamp=2020-11-12T11:43:54.569Z)
 
 ```
 - `::` in Kotlin is about meta-programming, including method references, property references and class literals. 
@@ -1084,3 +1084,253 @@ Output:
 ## 9. Grouping data
 
  > not implemented or left blank intentionally
+
+ > not implemented or left blank intentionally
+
+# Ch6. Friendly I/O Operations
+
+## 1. Reading the contents of a file
+
+```kotlin
+ import java.io.File.separator as SEP
+ val path = "src/main/resources/file1.txt"
+ val filePathName = if (SEP == "/") path else path.replace("/", SEP)
+ File(filePathName).run {
+     println(readText())
+ }
+```
+
+Output:
+
+```
+  |\_/|
+ / @ @ \
+( > º < )
+ `>>x<<´
+ /  O  \
+
+```
+
+## 2. Ensuring stream closing with the use (Kotlin reflection is not available)
+
+```kotlin
+ val path = "src/main/resources/file1.txt"
+ val filePathName = if (SEP == "/") path else path.replace("/", SEP)
+ File(filePathName).inputStream().use {
+     it.readBytes().also { a: ByteArray -> println(String(a)) }
+ }
+```
+
+Output:
+
+```
+  |\_/|
+ / @ @ \
+( > º < )
+ `>>x<<´
+ /  O  \
+
+```
+
+## 3. Reading the contents of a file line by line
+
+```kotlin
+ val path = "src/main/resources/file1.txt"
+ val filePathName = if (SEP == "/") path else path.replace("/", SEP)
+ File(filePathName).readLines().forEach(::println)
+```
+
+Output:
+
+```
+  |\_/|
+ / @ @ \
+( > º < )
+ `>>x<<´
+ /  O  \
+
+```
+
+## 4. Writing the contents to a file
+
+```kotlin
+ val byAndyHUnt = "..." // omitted for simplicity
+ val path = "src/main/resources/temp1.tmp"
+ val filePathName = if (SEP == "/") path else path.replace("/", SEP)
+ File(filePathName).writeText(byANdyHunt)
+```
+
+Output:
+
+```
+
+```
+
+## 5. Appending a file
+
+```kotlin
+ val path = "src/main/resources/temp2.tmp"
+ val filePathName = if (SEP == "/") path else path.replace("/", SEP)
+ with(File(filePathName)) {
+     if (exists()) delete()
+     appendText("""
+     A language that doesn't affect the way you think
+     about programming
+     is worth knowing
+     """.trimIndent())
+     appendText("\n")
+     appendBytes("Alan Perlis".toByteArray())
+ }
+```
+
+Output:
+
+```
+
+```
+
+## 6. Easy file copying
+
+ > not implemented or left blank intentionally
+
+## 7. Traversing files in a directory
+
+```kotlin
+ val path = "src/main/resources/"
+ val dir = if (SEP == "/") path else path.replace("/", SEP)
+     File(dir).walk()
+         .filter { it.isFile }
+         .filter { it.extension == "txt" || it.extension == "tmp" }
+         .filter { it.length() > 0}
+         .forEachIndexed { index, file ->
+             println("$index) ${file.path}")
+             println("  ${file.readText()}")
+             println()
+         }
+```
+
+Output:
+
+```
+0) src/main/resources/temp1.tmp
+  No one in the brief history of coputing
+has ever written a piece of perfect softeware.
+It's unlikely that you'll be the first - Andy Hunt
+
+1) src/main/resources/file2.txt
+  "Testing can show the presence of errors, but not their absence." - E. W. Dijkstra
+
+2) src/main/resources/temp2.tmp
+  A language that doesn't affect the way you think
+about programming
+is worth knowing
+Alan Perlis
+
+3) src/main/resources/file1.txt
+    |\_/|
+ / @ @ \
+( > º < )
+ `>>x<<´
+ /  O  \
+
+4) src/main/resources/subdirectory/sample_file_2.txt
+  "Weeks of coding can save you hours of planning." - Unknown
+
+
+```
+
+# Ch7. Making Asynchronous Programming Great Again
+
+## 1. Executing tasks in the background using threads
+
+```kotlin
+ fun getCurrentThreadName(): String = Thread.currentThread().name
+ fun `5 sec long task` () = Thread.sleep(5000)
+ fun `2 sec long task` () = Thread.sleep(2000)
+ 
+ println("Running on ${getCurrentThreadName()}")
+ thread {
+     println("Starting async operation on ${getCurrentThreadName()}")
+     `5 sec long task`()
+     println("Ending async operation on ${getCurrentThreadName()}")
+ }
+ thread {
+     println("Starting async operation on ${getCurrentThreadName()}")
+     `2 sec long task`()
+     println("Ending async operation on ${getCurrentThreadName()}")
+ }
+```
+
+Output:
+
+```
+
+Running on main
+Starting async operation on Thread-0
+Starting async operation on Thread-1
+Ending async operation on Thread-1
+Ending async operation on Thread-0
+
+
+```
+
+## 2. Background threads synchronization
+
+```kotlin
+ println("Running on ${getCurrentThreadName()}")
+ thread {
+     println("Starting async operation on ${getCurrentThreadName()}")
+     `5 sec long task`()
+     println("Ending async operation on ${getCurrentThreadName()}")
+ }.join()
+ thread {
+     println("Starting async operation on ${getCurrentThreadName()}")
+     `2 sec long task`()
+     println("Ending async operation on ${getCurrentThreadName()}")
+ }.join()
+```
+
+Output:
+
+```
+Running on main
+Starting async operation on Thread-2
+Ending async operation on Thread-2
+Starting async operation on Thread-3
+Ending async operation on Thread-3
+
+```
+
+## 3. Using coroutines for asynchronous concurrent execution of tasks
+Output:
+
+```
+Running on main
+
+Running on SushiThread
+
+Starting to cook rice on DefaultDispatcher-worker-1
+Current thread is not blocked while rice is being cooked
+Starting to prepare fish on SushiThread
+Fish prepared
+Starting to cut vegetables on SushiThread
+Vegetables ready
+Rice cooked
+Starting to roll the sushi on SushiThread
+Sushi rolled
+Total time: 12066
+
+```
+
+> see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)    
+
+
+## 4. Using coroutines for asynchronous concurrent execution with results handling
+
+## 5. Applying coroutines for asynchronous data processing
+
+## 6. Easy coroutine cancelation
+
+## 7. Building a REST API client with Retrofit and coroutines adapter
+
+## 8. Wrapping third party callback style APIs with coroutines
