@@ -88,6 +88,7 @@ fun ch7() {
     ))
 }
 
+val skipAsyncOperation = System.getenv("SKIP_ASYNC_OP") == "true"
 fun getCurrentThreadName(): String = Thread.currentThread().name
 fun `5 sec long task` () = Thread.sleep(5000)
 fun `2 sec long task` () = Thread.sleep(2000)
@@ -149,6 +150,7 @@ fun background_threads_synchronization() {
     }.join()
     """)
     run {
+        if (skipAsyncOperation) return@run false
         println("Running on ${getCurrentThreadName()}")
         thread {
             println("Starting async operation on ${getCurrentThreadName()}")
@@ -223,6 +225,7 @@ private suspend fun `show progress animation`() {
     var currentPosition = 0
     while (true) {
         print("\r")
+        val progressbar = (0 until progressBarLength).joinToString("") { if (it == currentPosition) ">" else "-" }
         val progressbar = (0 until progressBarLength).map {if (it == currentPosition) ">" else "-"}.joinToString("")
         print(progressbar)
         delay(50)
@@ -236,6 +239,7 @@ fun using_coroutines_for_asynchronous_concurrent_execution_with_results_handling
     see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)
     """)
     run {
+        if (skipAsyncOperation) return@run false
         `print current thread name`()
         GlobalScope.launch {
             println("Starting progressbar animation on ${getCurrentThreadName()}")
