@@ -100,21 +100,25 @@ fun background_threads_synchronization() {
 }
 private fun `cook rice`() {
     println("Starting to cook rice on ${getCurrentThreadName()}")
+    Thread.sleep(1000)
     Thread.sleep(10000)
     println("Rice cooked")
 }
 private fun `prepare fish`() {
     println("Starting to prepare fish on ${getCurrentThreadName()}")
+    Thread.sleep(200)
     Thread.sleep(2000)
     println("Fish prepared")
 }
 private fun `cut vegetable`() {
     println("Starting to cut vegetables on ${getCurrentThreadName()}")
+    Thread.sleep(200)
     Thread.sleep(2000)
     println("Vegetables ready")
 }
 private fun `roll the sushi`() {
     println("Starting to roll the sushi on ${getCurrentThreadName()}")
+    Thread.sleep(200)
     Thread.sleep(2000)
     println("Sushi rolled")
 }
@@ -126,6 +130,10 @@ fun using_coroutines_for_asynchronous_concurrent_execution_of_tasks() {
     run {
         `print current thread name`()
         var sushiCookingJob: Job
+        sushiCookingJob = GlobalScope.launch(newSingleThreadContext("SushiThread")) {
+            `print current thread name`()
+            var riceCookingJob = GlobalScope.launch {
+                `cook rice`()
         measureTimeMillis {
             sushiCookingJob = GlobalScope.launch(newSingleThreadContext("SushiThread")) {
                 `print current thread name`()
@@ -138,10 +146,18 @@ fun using_coroutines_for_asynchronous_concurrent_execution_of_tasks() {
                 riceCookingJob.join()
                 `roll the sushi`()
             }
+            println("Current thread is not blocked while rice is being cooked")
+            `prepare fish`()
+            `cut vegetable`()
+            riceCookingJob.join()
+            `roll the sushi`()
+        }
+        measureTimeMillis {
             runBlocking {
                 sushiCookingJob.join()
             }
         }.also {
+            println("Total time: $it ms")
             println("Total time: $it")
         }
     }
