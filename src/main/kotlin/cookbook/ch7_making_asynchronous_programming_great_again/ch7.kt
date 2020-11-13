@@ -81,6 +81,7 @@ fun ch7() {
         ::using_coroutines_for_asynchronous_concurrent_execution_of_tasks,
         ::using_coroutines_for_asynchronous_concurrent_execution_with_results_handling,
         ::applying_coroutines_for_asynchronous_data_processing,
+        ::easy_coroutine_cancellation,
         ::easy_coroutine_cancelation,
         ::building_a_REST_API_client_with_Retrofit_and_coroutines_adapter,
         ::wrapping_third_party_callback_style_APIs_with_coroutines
@@ -254,5 +255,6 @@ fun using_coroutines_for_asynchronous_concurrent_execution_with_results_handling
 }
 fun applying_coroutines_for_asynchronous_data_processing() {}
 fun easy_coroutine_cancelation() {}
+fun easy_coroutine_cancellation() {}
 fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {}
 fun wrapping_third_party_callback_style_APIs_with_coroutines() {}
