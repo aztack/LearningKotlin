@@ -74,7 +74,7 @@ Output:
 Output:
 
 ```
-183057113 doesn't not belong to 0..10
+1743562387 doesn't not belong to 0..10
 
 ```
 - There is no good way to escape dollar sign in Kotlin here document, you have to use string interpolation: `${'$'}`
@@ -96,7 +96,7 @@ Output:
 Output:
 
 ```
-65 belongs to grade OK
+51 belongs to grade Bad
 ```
 
 > You can inspect Kotlin bytecode in IntelliJ>Tools>Kotlin>Show Kotlin bytecode
@@ -861,10 +861,10 @@ Output:
 
 ```
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 3.20ms
+Execution time 1.75ms
 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000
-Execution time 1.57ms
-51% faster
+Execution time 980us
+44% faster
 
 ```
 
@@ -912,8 +912,8 @@ Excellent!
 Output:
 
 ```
-Message(text=Hi Agat, any plans for the evening?, sender=Samuel, timestamp=2020-11-13T03:41:54.330Z)
-Message(text=Great, I'll take some wine too, sender=Samuel, timestamp=2020-11-13T03:41:54.330Z)
+Message(text=Hi Agat, any plans for the evening?, sender=Samuel, timestamp=2020-11-13T07:04:48.190Z)
+Message(text=Great, I'll take some wine too, sender=Samuel, timestamp=2020-11-13T07:04:48.191Z)
 
 ```
 - `::` in Kotlin is about meta-programming, including method references, property references and class literals. 
@@ -1243,6 +1243,64 @@ Alan Perlis
 - [Kotlin Reference: Coroutine Basic](https://kotlinlang.org/docs/reference/coroutines/basics.html)
 - [KotlinConf 2017 - Deep Dive into Coroutines on JVM by Roman Elizarov](https://www.youtube.com/watch?v=YrrUCSi72E8)
 - [Kotlin’s suspend functions compared to JavaScript’s async/await](https://medium.com/@joffrey.bion/kotlins-suspend-functions-are-not-javascript-s-async-they-are-javascript-s-await-f95aae4b3fd9)
+- [What does the suspend function mean in a Kotlin Coroutine?](https://stackoverflow.com/questions/47871868/what-does-the-suspend-function-mean-in-a-kotlin-coroutine)
+
+
+Quote from the third article above
+
+
+> In short, Kotlin explicitly declares at the call site that the call is asynchronous via the async() function call. On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
+> In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit about making these calls synchronous via await.
+
+
+```javascript
+ // returns a Promise because of "async", even if we can see "return 42" in the body
+ async function somethingDeep() { 
+   // ... some long running operation here
+   return 42; 
+ }
+ 
+ // returns a Promise because of "async", even if we can see "return value" in the body
+ // async keyword is necessary because we use await
+ async function callSomethingDeep() {
+   // this synchronously waits for somethingDeep() to finish ('value' is a number, not a Promise)
+   const value = await somethingDeep()
+   return value;
+ }
+ 
+ // returns a Promise in order to draw a parallel with Kotlin's Deferred<Int>
+ function normalFunction() {
+   // this returns immediately
+   // normal call to async function = implicitely asynchronous because it returns a Promise
+   const promise = callSomethingDeep();
+   return promise
+ }
+```
+
+
+```kotlin
+ // returns an actual Int, the declaration matches the body
+ suspend fun somethingDeep(): Int {
+     // ... some long running operation here
+     return 42
+ }
+ 
+ // returns an actual Int, the declaration matches the body
+ // suspend keyword is necessary because we call a suspending function
+ suspend fun callSomethingDeep(): Int {
+     // this synchronously waits for somethingDeep() to finish
+     val value: Int = somethingDeep()
+     return value
+ }
+ 
+ // returns a Deferred<Int> in order to draw a parallel with JavaScript's Promise
+ fun normalFunction(): Deferred<Int> {
+     // this returns immediately
+     // 'async' explicitly makes this call asynchronous and returns a Deferred<Int>
+     val deferred: Deferred<Int> = GlobalScope.async { callSomethingDeep() }
+     return deferred
+ }
+```
 
 
 ## 1. Executing tasks in the background using threads
@@ -1313,16 +1371,16 @@ Running on main
 
 Running on SushiThread
 
+Starting to cook rice on DefaultDispatcher-worker-1
 Current thread is not blocked while rice is being cooked
 Starting to prepare fish on SushiThread
-Starting to cook rice on DefaultDispatcher-worker-1
 Fish prepared
 Starting to cut vegetables on SushiThread
 Vegetables ready
 Rice cooked
 Starting to roll the sushi on SushiThread
 Sushi rolled
-Total time: 1223 ms
+Total time: 1246 ms
 
 ```
 
@@ -1339,10 +1397,10 @@ Output:
 Running on main
 
 Starting progressbar animation on DefaultDispatcher-worker-1
- -----------------------------
+>-----------------------------
 main thread is not blocked while tasks are in progress
 Starting computations on DefaultDispatcher-worker-2
----- -------------------------
+----->------------------------
 The anwser to life the universe and everything: 42
 Running on main
 

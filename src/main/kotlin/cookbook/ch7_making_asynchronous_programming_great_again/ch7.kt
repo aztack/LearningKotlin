@@ -17,8 +17,64 @@ fun ch7() {
     list(arrayOf(
         "[Kotlin Reference: Coroutine Basic](https://kotlinlang.org/docs/reference/coroutines/basics.html)",
         "[KotlinConf 2017 - Deep Dive into Coroutines on JVM by Roman Elizarov](https://www.youtube.com/watch?v=YrrUCSi72E8)",
-        "[Kotlin’s suspend functions compared to JavaScript’s async/await](https://medium.com/@joffrey.bion/kotlins-suspend-functions-are-not-javascript-s-async-they-are-javascript-s-await-f95aae4b3fd9)"
+        "[Kotlin’s suspend functions compared to JavaScript’s async/await](https://medium.com/@joffrey.bion/kotlins-suspend-functions-are-not-javascript-s-async-they-are-javascript-s-await-f95aae4b3fd9)",
+        "[What does the suspend function mean in a Kotlin Coroutine?](https://stackoverflow.com/questions/47871868/what-does-the-suspend-function-mean-in-a-kotlin-coroutine)"
     ))
+
+    text("Quote from the third article above")
+    comment("""
+    In short, Kotlin explicitly declares at the call site that the call is asynchronous via the async() function call. On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
+    In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit about making these calls synchronous via await.
+    """)
+
+    code("""
+    // returns a Promise because of "async", even if we can see "return 42" in the body
+    async function somethingDeep() { 
+      // ... some long running operation here
+      return 42; 
+    }
+    
+    // returns a Promise because of "async", even if we can see "return value" in the body
+    // async keyword is necessary because we use await
+    async function callSomethingDeep() {
+      // this synchronously waits for somethingDeep() to finish ('value' is a number, not a Promise)
+      const value = await somethingDeep()
+      return value;
+    }
+    
+    // returns a Promise in order to draw a parallel with Kotlin's Deferred<Int>
+    function normalFunction() {
+      // this returns immediately
+      // normal call to async function = implicitely asynchronous because it returns a Promise
+      const promise = callSomethingDeep();
+      return promise
+    }
+    """, "javascript")
+
+    code("""
+    // returns an actual Int, the declaration matches the body
+    suspend fun somethingDeep(): Int {
+        // ... some long running operation here
+        return 42
+    }
+    
+    // returns an actual Int, the declaration matches the body
+    // suspend keyword is necessary because we call a suspending function
+    suspend fun callSomethingDeep(): Int {
+        // this synchronously waits for somethingDeep() to finish
+        val value: Int = somethingDeep()
+        return value
+    }
+    
+    // returns a Deferred<Int> in order to draw a parallel with JavaScript's Promise
+    fun normalFunction(): Deferred<Int> {
+        // this returns immediately
+        // 'async' explicitly makes this call asynchronous and returns a Deferred<Int>
+        val deferred: Deferred<Int> = GlobalScope.async { callSomethingDeep() }
+        return deferred
+    }
+    """)
+
     h2(arrayOf(
         ::executing_tasks_in_the_background_using_threads,
         ::background_threads_synchronization,
