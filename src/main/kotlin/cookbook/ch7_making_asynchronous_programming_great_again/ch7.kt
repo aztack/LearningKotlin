@@ -4,7 +4,6 @@ import code
 import comment
 import h1
 import h2
-import jdk.nashorn.internal.objects.Global
 import kotlinx.coroutines.*
 import list
 import text
@@ -82,13 +81,13 @@ fun ch7() {
         ::using_coroutines_for_asynchronous_concurrent_execution_with_results_handling,
         ::applying_coroutines_for_asynchronous_data_processing,
         ::easy_coroutine_cancellation,
-        ::easy_coroutine_cancelation,
         ::building_a_REST_API_client_with_Retrofit_and_coroutines_adapter,
         ::wrapping_third_party_callback_style_APIs_with_coroutines
     ))
 }
 
 val skipAsyncOperation = System.getenv("SKIP_ASYNC_OP") == "true"
+
 fun getCurrentThreadName(): String = Thread.currentThread().name
 fun `5 sec long task` () = Thread.sleep(5000)
 fun `2 sec long task` () = Thread.sleep(2000)
@@ -190,8 +189,9 @@ private fun `print current thread name`() {
 }
 fun using_coroutines_for_asynchronous_concurrent_execution_of_tasks() {
     run {
+        if (skipAsyncOperation) return@run false
         `print current thread name`()
-        var sushiCookingJob: Job
+        val sushiCookingJob: Job
         sushiCookingJob = GlobalScope.launch(newSingleThreadContext("SushiThread")) {
             `print current thread name`()
             var riceCookingJob = GlobalScope.launch {
@@ -226,7 +226,6 @@ private suspend fun `show progress animation`() {
     while (true) {
         print("\r")
         val progressbar = (0 until progressBarLength).joinToString("") { if (it == currentPosition) ">" else "-" }
-        val progressbar = (0 until progressBarLength).map {if (it == currentPosition) ">" else "-"}.joinToString("")
         print(progressbar)
         delay(50)
         if (currentPosition == progressBarLength) currentPosition = 0
@@ -257,8 +256,27 @@ fun using_coroutines_for_asynchronous_concurrent_execution_with_results_handling
         }
     }
 }
-fun applying_coroutines_for_asynchronous_data_processing() {}
-fun easy_coroutine_cancelation() {}
+
+suspend fun <T, R> Iterable<T>.mapConcurrent(transform: suspend (T) -> R) =
+        this.map {
+            GlobalScope.async { transform(it)}
+        }.map {
+            it.await()
+        }
+
+fun applying_coroutines_for_asynchronous_data_processing() {
+    run {
+        runBlocking {
+            val totalTime = measureTimeMillis {
+                (0..10).mapConcurrent {
+                    delay(100L * it)
+                    it * it
+                }.map { println(it) }
+            }
+            println("Total time: $totalTime ms")
+        }
+    }
+}
 fun easy_coroutine_cancellation() {}
 fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {}
 fun wrapping_third_party_callback_style_APIs_with_coroutines() {}
