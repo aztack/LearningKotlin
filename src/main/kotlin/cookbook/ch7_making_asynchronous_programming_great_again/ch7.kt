@@ -12,6 +12,7 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.await
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Query
 import text
@@ -447,14 +448,18 @@ interface GithubApi {
     @GET("/search/repositories")
     fun searchRepositoriesAsync(@Query("q") searchQuery: String): Call<Response>
 }
+
+private inline fun <reified T> createApiOn(baseUrl: String): T {
+    return Retrofit.Builder()
+            .baseUrl(baseUrl)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(T::class.java)
+}
 fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {
     run {
         runBlocking {
-            val api = Retrofit.Builder()
-                    .baseUrl("https://api.github.com")
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build()
-                    .create(GithubApi::class.java)
+            val api = createApiOn<GithubApi>("https://api.github.com")
 
             val downloadedRepos = api.searchRepositoriesAsync("Kotlin").await().list
             downloadedRepos.sortedBy { it.starts }
