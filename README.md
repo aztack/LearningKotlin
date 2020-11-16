@@ -1587,5 +1587,3 @@ getResults() completed
 # Ch8. Best Practices for the Android JUnit and JVM UI Frameworks
 
  > not implemented or left blank intentionally
-
-Process finished with exit code 0
