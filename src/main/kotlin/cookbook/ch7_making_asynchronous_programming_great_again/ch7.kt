@@ -459,6 +459,9 @@ private inline fun <reified T> createApiOn(baseUrl: String): T {
             .create(T::class.java)
 }
 fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {
+    comment("""
+    see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)
+    """)
     run {
         runBlocking {
             val api = createApiOn<GithubApi>("https://api.github.com")
@@ -474,6 +477,9 @@ fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {
     }
 }
 fun wrapping_third_party_callback_style_APIs_with_coroutines() {
+    comment("""
+    see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)
+    """)
     data class Result(val displayName: String);
     fun getResultAsync(callback: (List<Result>) -> Unit) =
             thread {
