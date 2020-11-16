@@ -403,6 +403,29 @@ fun applying_coroutines_for_asynchronous_data_processing() {
         }
     }
 }
-fun easy_coroutine_cancellation() {}
+
+fun easy_coroutine_cancellation() {
+    code("""
+    runBlocking {
+        val job = GlobalScope.launch { `show progress animation`() }
+        delay(5000)
+        job.cancel()
+        job.join()
+        println("Cancelled")
+    }
+    """)
+
+    run {
+        runBlocking {
+            val job = GlobalScope.launch { `show progress animation`() }
+            delay(5000)
+            job.cancel()
+            job.join()
+            println("Cancelled")
+        }
+    }
+
+    comment("[Bluebird Docs: Cancellation](http://bluebirdjs.com/docs/api/cancellation.html)")
+}
 fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {}
 fun wrapping_third_party_callback_style_APIs_with_coroutines() {}
