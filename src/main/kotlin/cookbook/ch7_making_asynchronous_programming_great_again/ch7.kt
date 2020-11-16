@@ -12,12 +12,14 @@ import retrofit2.Call
 import retrofit2.Retrofit
 import retrofit2.await
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
 import retrofit2.http.GET
 import retrofit2.http.Query
 import text
 import run
 import kotlin.concurrent.thread
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 import kotlin.system.measureTimeMillis
 
 fun ch7() {
@@ -471,4 +473,28 @@ fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {
         }
     }
 }
-fun wrapping_third_party_callback_style_APIs_with_coroutines() {}
+fun wrapping_third_party_callback_style_APIs_with_coroutines() {
+    data class Result(val displayName: String);
+    fun getResultAsync(callback: (List<Result>) -> Unit) =
+            thread {
+                val results = mutableListOf<Result>()
+                Thread.sleep(1000)
+                results.add(Result("a"))
+                results.add(Result("b"))
+                results.add(Result("c"))
+                callback(results)
+            }
+
+    suspend fun getResult(): List<Result> =
+            suspendCoroutine {
+                continuation: Continuation<List<Result>> ->
+                    getResultAsync { continuation.resume(it) }
+            }
+
+    runBlocking {
+        val results = GlobalScope.async { getResult() }
+        println("getResults() is running in background. Main thread is not blocked.")
+        results.await().map { println(it.displayName) }
+        println("getResults() completed")
+    }
+}
