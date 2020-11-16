@@ -46,7 +46,7 @@ fun ch7() {
     JavaScript| async                         | await fun()                | asyncFun()
     
     In Kotlin, calling a suspended function will block the thread unless call via the GlobalScope.async() explicitly.
-    """)
+    """.trimIndent())
 
     comment("""
     [Kotlin Coroutines vs Javascript Async/await](https://ducaale.github.io/Kotlin-Coroutines-vs-Javascript-Async-await/):
