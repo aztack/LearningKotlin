@@ -1249,11 +1249,27 @@ Alan Perlis
 Quote from the third article above
 
 
-> In short, Kotlin explicitly declares at the call site that the call is asynchronous via the async() function call. On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
-> In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit about making these calls synchronous via await.
+> In short, Kotlin explicitly declares at the call site that the call is asynchronous via the GlobalScope.async() function call. 
+> On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
+> In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit 
+> about making these calls synchronous via await.
+
+
+Language  | Asynchronous Function Keyword | Waiting for Async Function | Require a Promise/Deferred
+----------|-------------------------------|----------------------------|---------------------------
+Kotlin    | suspend                       | fun()                      | GlobalScope.async{ suspendedFun() }
+JavaScript| async                         | await fun()                | asyncFun()
+
+In Kotlin, calling a suspended function will block the thread unless call via the GlobalScope.async() explicitly.
+    
+
+> [Kotlin Coroutines vs Javascript Async/await](https://ducaale.github.io/Kotlin-Coroutines-vs-Javascript-Async-await/):
+> Kotlin makes use of suspend keyword instead of `async` keyword.
+> Notice the lack of await in kotlin. that is because __kotlin executes suspend functions in sequential fashion by default__.
 
 
 ```javascript
+ // JavaScript
  // returns a Promise because of "async", even if we can see "return 42" in the body
  async function somethingDeep() { 
    // ... some long running operation here
@@ -1279,6 +1295,7 @@ Quote from the third article above
 
 
 ```kotlin
+ // Kotlin
  // returns an actual Int, the declaration matches the body
  suspend fun somethingDeep(): Int {
      // ... some long running operation here
@@ -1299,6 +1316,69 @@ Quote from the third article above
      // 'async' explicitly makes this call asynchronous and returns a Deferred<Int>
      val deferred: Deferred<Int> = GlobalScope.async { callSomethingDeep() }
      return deferred
+ }
+```
+
+
+    Mimic `Promise.all` in Kotlin:
+    
+
+```javascript
+ // JavaScript
+ // await multiple promise
+ const doStuff = async () => {
+     const id = 1
+     const user = await getUsers(id)
+ 
+     const postsPromise = getPosts(user) // return Promise by default
+     const commentsPromise = getComments(user)
+ 
+     const posts = await postsPromise
+     const comments = await commentsPromise
+ 
+     // or you can just do 
+     // Promise.all([postsPromise, commentsPromise])
+ }
+```
+
+
+```kotlin
+ // kotlin
+ // await multiple deferred
+ suspend fun doStuff() {
+     val id = 1
+     val user =  getUsers(id) 
+ 
+ 
+     val postsDeferred = GlobalScope.async { getPosts(user) } // return deferred by calling with GlobalScope.async
+     val commentsDeferred = GlobalScope.async { getComments(user) }
+ 
+     val posts = postsDeferred.await()
+     val comments = commentsDeferred.await()
+ }
+```
+
+Calling suspended function in normal function:
+
+```kotlin
+ // Kotlin
+ fun normalBoringFunction() {
+     GlobalScope.launch() {
+         // now you can use your suspending functions
+     }
+ }
+```
+
+if you want to block the main thread like in your main function you can wrap launch coroutine builder 
+with another coroutine builder called runBlocking
+
+```kotlin
+ // kotlin
+ // now your main exit because runBlocking is blocking it
+ fun main(args: Array<String>) = runBlocking<Unit> {
+     launch() {
+         // now you can use your suspending functions
+     }
  }
 ```
 
@@ -1355,11 +1435,6 @@ Ending async operation on Thread-0
 Output:
 
 ```
-Running on main
-Starting async operation on Thread-2
-Ending async operation on Thread-2
-Starting async operation on Thread-3
-Ending async operation on Thread-3
 
 ```
 
@@ -1367,20 +1442,6 @@ Ending async operation on Thread-3
 Output:
 
 ```
-Running on main
-
-Running on SushiThread
-
-Starting to cook rice on DefaultDispatcher-worker-1
-Current thread is not blocked while rice is being cooked
-Starting to prepare fish on SushiThread
-Fish prepared
-Starting to cut vegetables on SushiThread
-Vegetables ready
-Rice cooked
-Starting to roll the sushi on SushiThread
-Sushi rolled
-Total time: 1246 ms
 
 ```
 
@@ -1394,23 +1455,137 @@ Total time: 1246 ms
 Output:
 
 ```
-Running on main
-
-Starting progressbar animation on DefaultDispatcher-worker-1
->-----------------------------
-main thread is not blocked while tasks are in progress
-Starting computations on DefaultDispatcher-worker-2
------>------------------------
-The anwser to life the universe and everything: 42
-Running on main
-
 
 ```
 
 ## 5. Applying coroutines for asynchronous data processing
 
-## 6. Easy coroutine cancelation
+```kotlin
+ suspend fun <T, R> Iterable<T>.mapConcurrent(transform: suspend (T) -> R) =
+     this.map {
+         GlobalScope.async { transform(it)} // return Deferred
+     }.map {
+         it.await() // wait deferred to return
+     }
+ fun fn() {
+     // calling of suspend function must surrounded with `runBlocking`
+     runBlocking {
+         val totalTime = measureTimeMillis {
+             (0..10).mapConcurrent {
+                 delay(100L * it)
+                 it * it
+             }.map { println(it) }
+         }
+         println("Total time: $totalTime ms")
+     } 
+ }
+```
+
+
+Equals to:
+
+
+```kotlin
+ // JavaScript equivalent:
+ Array.prototype.mapConcurrent = function (transform) {
+     return Promise.all(this.map(transform))
+ }
+ (async function fn(){
+     const totalTime = console.time('mapConcurrent)');
+     const transformed = await (new Array(10).fill(0).map((_, index) => index)).mapConcurrent((it) => {
+         return new Promise((rs, rj) => {
+             setTimeout(() => rs(it * it), 100*it);
+         });
+     })
+     transformed.forEach(console.log);
+     
+     console.log("Total time:");
+     console.timeEnd('mapConcurrent'));
+ })();
+```
+
+Output:
+
+```
+0
+1
+4
+9
+16
+25
+36
+49
+64
+81
+100
+Total time: 1019 ms
+
+```
+
+## 6. Easy coroutine cancellation
+
+```kotlin
+ runBlocking {
+     val job = GlobalScope.launch { `show progress animation`() }
+     delay(5000)
+     job.cancel()
+     job.join()
+     println("Cancelled")
+ }
+```
+
+Output:
+
+```
+---->-------------------------Cancelled
+
+```
+
+> [Bluebird Docs: Cancellation](http://bluebirdjs.com/docs/api/cancellation.html)
+
 
 ## 7. Building a REST API client with Retrofit and coroutines adapter
 
+> see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)    
+
+Output:
+
+```
+Kotlin-Polytech/KotlinAsFirst-Coursera ⭐️20
+Репозиторий для курса https://www.coursera.org/learn/vvedenie-v-yazyk-kotlin/
+https://github.com/Kotlin-Polytech/KotlinAsFirst-Coursera
+
+exercism/kotlin ⭐️124
+Exercism exercises in Kotlin.
+https://github.com/exercism/kotlin
+
+TheAlgorithms/Kotlin ⭐️299
+All Algorithms implemented in Kotlin
+https://github.com/TheAlgorithms/Kotlin
+
+google-developer-training/android-kotlin-fundamentals-starter-apps ⭐️463
+android-kotlin-fundamentals-starter-apps
+https://github.com/google-developer-training/android-kotlin-fundamentals-starter-apps
+
+google-developer-training/android-kotlin-fundamentals-apps ⭐️638
+android-kotlin-fundamentals-apps
+https://github.com/google-developer-training/android-kotlin-fundamentals-apps
+
+
+```
+
 ## 8. Wrapping third party callback style APIs with coroutines
+
+> see [source file](src/main/kotlin/cookbook/ch7_making_asynchronous_programming_great_again/ch7.kt)    
+
+getResults() is running in background. Main thread is not blocked.
+a
+b
+c
+getResults() completed
+
+# Best Practices for the Android JUnit and JVM UI Frameworks
+
+ > not implemented or left blank intentionally
+
+Process finished with exit code 0
