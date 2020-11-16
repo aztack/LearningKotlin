@@ -194,6 +194,7 @@ fun using_coroutines_for_asynchronous_concurrent_execution_of_tasks() {
         val sushiCookingJob: Job
         sushiCookingJob = GlobalScope.launch(newSingleThreadContext("SushiThread")) {
             `print current thread name`()
+            val riceCookingJob = GlobalScope.launch {
             var riceCookingJob = GlobalScope.launch {
                 `cook rice`()
             }
