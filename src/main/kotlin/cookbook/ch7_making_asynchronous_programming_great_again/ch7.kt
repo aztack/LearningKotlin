@@ -349,6 +349,48 @@ suspend fun <T, R> Iterable<T>.mapConcurrent(transform: suspend (T) -> R) =
         }
 
 fun applying_coroutines_for_asynchronous_data_processing() {
+    code("""
+    suspend fun <T, R> Iterable<T>.mapConcurrent(transform: suspend (T) -> R) =
+        this.map {
+            GlobalScope.async { transform(it)} // return Deferred
+        }.map {
+            it.await() // wait deferred to return
+        }
+    fun fn() {
+        // calling of suspend function must surrounded with `runBlocking`
+        runBlocking {
+            val totalTime = measureTimeMillis {
+                (0..10).mapConcurrent {
+                    delay(100L * it)
+                    it * it
+                }.map { println(it) }
+            }
+            println("Total time: ${'$'}totalTime ms")
+        } 
+    }
+    """)
+
+    text("Equals to:")
+
+    code("""
+    // JavaScript equivalent:
+    Array.prototype.mapConcurrent = function (transform) {
+        return Promise.all(this.map(transform))
+    }
+    (async function fn(){
+        const totalTime = console.time('mapConcurrent)');
+        const transformed = await (new Array(10).fill(0).map((_, index) => index)).mapConcurrent((it) => {
+            return new Promise((rs, rj) => {
+                setTimeout(() => rs(it * it), 100*it);
+            });
+        })
+        transformed.forEach(console.log);
+        
+        console.log("Total time:");
+        console.timeEnd('mapConcurrent'));
+    })();
+    """)
+
     run {
         runBlocking {
             val totalTime = measureTimeMillis {
