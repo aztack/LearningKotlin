@@ -1584,7 +1584,7 @@ b
 c
 getResults() completed
 
-# Best Practices for the Android JUnit and JVM UI Frameworks
+# Ch8. Best Practices for the Android JUnit and JVM UI Frameworks
 
  > not implemented or left blank intentionally
 
