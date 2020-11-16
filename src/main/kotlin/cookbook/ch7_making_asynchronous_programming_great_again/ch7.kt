@@ -1,12 +1,19 @@
 package cookbook.ch7_making_asynchronous_programming_great_again
 
 import code
+import com.google.gson.annotations.SerializedName
 import comment
 import h1
 import h2
 import html
 import kotlinx.coroutines.*
 import list
+import retrofit2.Call
+import retrofit2.Retrofit
+import retrofit2.await
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Query
 import text
 import run
 import kotlin.concurrent.thread
@@ -427,5 +434,36 @@ fun easy_coroutine_cancellation() {
 
     comment("[Bluebird Docs: Cancellation](http://bluebirdjs.com/docs/api/cancellation.html)")
 }
-fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {}
+data class Repository(
+        val id: Long?,
+        val name: String?,
+        val description: String?,
+        @SerializedName("full_name") val fullName: String?,
+        @SerializedName("html_url") val url: String?,
+        @SerializedName("stargazers_count") val starts: Long?)
+
+data class Response(@SerializedName("items") val list: Collection<Repository>)
+interface GithubApi {
+    @GET("/search/repositories")
+    fun searchRepositoriesAsync(@Query("q") searchQuery: String): Call<Response>
+}
+fun building_a_REST_API_client_with_Retrofit_and_coroutines_adapter() {
+    run {
+        runBlocking {
+            val api = Retrofit.Builder()
+                    .baseUrl("https://api.github.com")
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build()
+                    .create(GithubApi::class.java)
+
+            val downloadedRepos = api.searchRepositoriesAsync("Kotlin").await().list
+            downloadedRepos.sortedBy { it.starts }
+                    .take(5).forEach {
+                        it.apply {
+                            println("$fullName ⭐️$starts\n$description\n$url\n")
+                        }
+                    }
+        }
+    }
+}
 fun wrapping_third_party_callback_style_APIs_with_coroutines() {}
