@@ -4,6 +4,7 @@ import code
 import comment
 import h1
 import h2
+import html
 import kotlinx.coroutines.*
 import list
 import text
@@ -22,11 +23,29 @@ fun ch7() {
 
     text("Quote from the third article above")
     comment("""
-    In short, Kotlin explicitly declares at the call site that the call is asynchronous via the async() function call. On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
-    In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit about making these calls synchronous via await.
+    In short, Kotlin explicitly declares at the call site that the call is asynchronous via the GlobalScope.async() function call. 
+    On the other hand, if something looks like a normal function call, it is implicitly synchronous and we can expect a result directly.
+    In JavaScript, normal calls of an async function are implicitly asynchronous, because they return a Promise. JavaScript is explicit 
+    about making these calls synchronous via await.
+    """.trimIndent())
+
+    html("""
+    Language  | Asynchronous Function Keyword | Waiting for Async Function | Require a Promise/Deferred
+    ----------|-------------------------------|----------------------------|---------------------------
+    Kotlin    | suspend                       | fun()                      | GlobalScope.async{ suspendedFun() }
+    JavaScript| async                         | await fun()                | asyncFun()
+    
+    In Kotlin, calling a suspended function will block the thread unless call via the GlobalScope.async() explicitly.
     """)
 
+    comment("""
+    [Kotlin Coroutines vs Javascript Async/await](https://ducaale.github.io/Kotlin-Coroutines-vs-Javascript-Async-await/):
+    Kotlin makes use of suspend keyword instead of `async` keyword.
+    Notice the lack of await in kotlin. that is because __kotlin executes suspend functions in sequential fashion by default__.
+    """.trimIndent())
+
     code("""
+    // JavaScript
     // returns a Promise because of "async", even if we can see "return 42" in the body
     async function somethingDeep() { 
       // ... some long running operation here
@@ -51,6 +70,7 @@ fun ch7() {
     """, "javascript")
 
     code("""
+    // Kotlin
     // returns an actual Int, the declaration matches the body
     suspend fun somethingDeep(): Int {
         // ... some long running operation here
@@ -73,6 +93,70 @@ fun ch7() {
         return deferred
     }
     """)
+
+    html("""
+    Mimic `Promise.all` in Kotlin:
+    """)
+
+    code("""
+    // JavaScript
+    // await multiple promise
+    const doStuff = async () => {
+        const id = 1
+        const user = await getUsers(id)
+
+        const postsPromise = getPosts(user) // return Promise by default
+        const commentsPromise = getComments(user)
+
+        const posts = await postsPromise
+        const comments = await commentsPromise
+
+        // or you can just do 
+        // Promise.all([postsPromise, commentsPromise])
+    }
+    """.trimIndent(), "javascript")
+
+    code("""
+    // kotlin
+    // await multiple deferred
+    suspend fun doStuff() {
+        val id = 1
+        val user =  getUsers(id) 
+
+
+        val postsDeferred = GlobalScope.async { getPosts(user) } // return deferred by calling with GlobalScope.async
+        val commentsDeferred = GlobalScope.async { getComments(user) }
+
+        val posts = postsDeferred.await()
+        val comments = commentsDeferred.await()
+    }
+    """.trimIndent())
+
+    html("Calling suspended function in normal function:")
+
+    code("""
+    // Kotlin
+    fun normalBoringFunction() {
+        GlobalScope.launch() {
+            // now you can use your suspending functions
+        }
+    }
+    """.trimIndent())
+
+    html("""
+    if you want to block the main thread like in your main function you can wrap launch coroutine builder 
+    with another coroutine builder called runBlocking
+    """.trimIndent())
+    code("""
+    // kotlin
+    // now your main exit because runBlocking is blocking it
+    fun main(args: Array<String>) = runBlocking<Unit> {
+        launch() {
+            // now you can use your suspending functions
+        }
+    }
+    """.trimIndent())
+
 
     h2(arrayOf(
         ::executing_tasks_in_the_background_using_threads,
@@ -195,7 +279,6 @@ fun using_coroutines_for_asynchronous_concurrent_execution_of_tasks() {
         sushiCookingJob = GlobalScope.launch(newSingleThreadContext("SushiThread")) {
             `print current thread name`()
             val riceCookingJob = GlobalScope.launch {
-            var riceCookingJob = GlobalScope.launch {
                 `cook rice`()
             }
             println("Current thread is not blocked while rice is being cooked")
