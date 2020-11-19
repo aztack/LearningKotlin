@@ -1,3 +1,4 @@
+import kotlinx.coroutines.runBlocking
 import java.io.OutputStream
 import java.io.PrintStream
 
@@ -54,6 +55,15 @@ fun run(block: () -> Any?) {
     println("Output:")
     println("\n```")
     block()
+    println("\n```")
+}
+
+fun runAsync(block: suspend () -> Any?) {
+    println("Output:")
+    println("\n```")
+    runBlocking {
+        block()
+    }
     println("\n```")
 }
 
