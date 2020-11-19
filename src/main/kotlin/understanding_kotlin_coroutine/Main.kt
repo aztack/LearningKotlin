@@ -2,13 +2,20 @@ package understanding_kotlin_coroutine
 
 import html
 import img
+import tee
+import understanding_kotlin_coroutine.ch1_introducing_asynchronous_application_design.ch1
+import java.io.File
+import java.io.PrintStream
 
 fun main() {
-    html(
-        img(
-            "深入理解Kotlin协程",
-            "https://user-images.githubusercontent.com/782871/99400917-8744ec00-2922-11eb-9bb7-d58649ffcc04.png"
-        )
-    )
+    val dir = "./src/main/kotlin/understanding_kotlin_coroutine"
+    arrayOf(
+            "ch1_introducing_asynchronous_application_design"
+    ).forEach {
+        val readme ="${dir}/${it}/README.md"
+        File(readme).createNewFile()
+        tee(PrintStream(readme))
+        ch1()
+    }
 }
 
