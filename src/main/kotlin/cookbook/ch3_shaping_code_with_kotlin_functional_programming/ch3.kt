@@ -207,6 +207,15 @@ fun discovering_basic_scoping_functions() {
         personDao.insert(person)
     """)
 
+    code("""
+    override fun onCreate(savedInstanceState: Bundle?)
+        super.onCreate(savedInstanceState)
+        if (savedInstanceState != null) {
+            savedInstanceState.getString("key")?.let { Log.d(tag, it) }
+        }
+    }
+    """)
+
     text("Conventions for using `with`")
     code("""
         val person: Person = getPerson()
