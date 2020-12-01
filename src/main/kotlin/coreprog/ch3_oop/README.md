@@ -294,4 +294,13 @@ public final class Bird5 {
 
 ## 3.4 真正的数据类型
 
+### copy()
+
+
+### 解构
+
+- 类似ES6中的结构，不过需要自己实现componentN
+- data class会帮你实现componentN
+- [Destructuring Types](/src/main/kotlin/cookbook#4-destructuring-types)
+
 ## 3.5 从static到object
